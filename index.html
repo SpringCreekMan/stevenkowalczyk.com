@@ -345,12 +345,17 @@
   .timeline-item {
     position: relative;
     margin-bottom: 56px;
-    opacity: 0;
-    transform: translateX(-20px);
+    opacity: 1;
+    transform: translateX(0);
     transition: opacity 0.6s, transform 0.6s;
   }
 
-  .timeline-item.visible {
+  .animate .timeline-item {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  .animate .timeline-item.visible {
     opacity: 1;
     transform: translateX(0);
   }
@@ -471,12 +476,17 @@
 
   .skill-item {
     margin-bottom: 20px;
-    opacity: 0;
-    transform: translateY(12px);
+    opacity: 1;
+    transform: translateY(0);
     transition: opacity 0.5s, transform 0.5s;
   }
 
-  .skill-item.visible { opacity: 1; transform: translateY(0); }
+  .animate .skill-item {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .animate .skill-item.visible { opacity: 1; transform: translateY(0); }
 
   .skill-row {
     display: flex;
@@ -556,13 +566,17 @@
     background: var(--navy-card);
     border: 1px solid var(--navy-border);
     padding: 28px 30px;
-    transition: border-color 0.3s;
-    opacity: 0;
-    transform: translateY(16px);
+    opacity: 1;
+    transform: translateY(0);
     transition: opacity 0.5s, transform 0.5s, border-color 0.3s;
   }
 
-  .edu-card.visible { opacity: 1; transform: translateY(0); }
+  .animate .edu-card {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .animate .edu-card.visible { opacity: 1; transform: translateY(0); }
   .edu-card:hover { border-color: var(--gold); }
 
   .edu-icon {
@@ -1084,27 +1098,43 @@
 </footer>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-  // Intersection Observer for fade-in animations
+  // Only enable scroll animations if JS works fine
+  document.body.classList.add('animate');
+
+  // Trigger skill bars for elements already in viewport
+  function triggerVisible(el, i) {
+    setTimeout(() => {
+      el.classList.add('visible');
+      const fill = el.querySelector('.skill-fill');
+      if (fill) {
+        fill.style.width = el.dataset.pct + '%';
+      }
+    }, i * 80);
+  }
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry, i) => {
       if (entry.isIntersecting) {
-        setTimeout(() => {
-          entry.target.classList.add('visible');
-          // Skill bar fill
-          const fill = entry.target.querySelector('.skill-fill');
-          if (fill) {
-            const pct = entry.target.dataset.pct;
-            fill.style.width = pct + '%';
-          }
-        }, i * 80);
+        triggerVisible(entry.target, i);
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.15 });
+  }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
   document.querySelectorAll('.timeline-item, .skill-item, .edu-card').forEach(el => {
     observer.observe(el);
   });
+
+  // Fallback: make everything visible after 2s in case observer fails
+  setTimeout(() => {
+    document.querySelectorAll('.timeline-item, .skill-item, .edu-card').forEach(el => {
+      el.classList.add('visible');
+      const fill = el.querySelector('.skill-fill');
+      if (fill && !fill.style.width) {
+        fill.style.width = el.dataset.pct + '%';
+      }
+    });
+  }, 2000);
 
   // Smooth active nav highlight
   const sections = document.querySelectorAll('section[id]');
